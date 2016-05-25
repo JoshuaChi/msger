@@ -1,7 +1,7 @@
 var main = (function() {
 	return {
 		userName: undefined,
-    sockjs : new SockJS('/connect'),
+    sockjs : undefined,
 		getState: function() {
 			return this.sockjs.readyState;
 		},
@@ -13,18 +13,29 @@ var main = (function() {
 	      $('#output').append($("<br>"));
 	      $('#output').scrollTop($('#output').scrollTop()+10000);
 	  },
-		init: function() {  
-	    this.sockjs.onopen = function() {
-	        main.log(' [ * ] Connected (using: ' + this.protocol + ')');
-					main.userName = 'User-' + Math.floor((Math.random() * 100) + 1);
+		
+		join: function(name) {
+			this.sockjs = new SockJS(
+				'/connect', 
+				null, 
+				{
+					sessionId : function() {
+						return name;
+					}
+				}
+			);
+	    
+			this.sockjs.onopen = function() {
+	        main.log(' [ * ] Connected (using: ' + this.transport + ')');
 	    };
 	    this.sockjs.onclose = function(e) {
 	        main.log(' [ * ] Disconnected ('+e.status + ' ' + e.reason+ ')');
 	    };
 	    this.sockjs.onmessage = function(e) {
-	        main.log(' [ '+ main.userName +' ] received: ' + JSON.stringify(e.data));
+				  var obj = $.parseJSON(e.data);
+	        main.log(' [ '+ obj.user + "/" +obj.resource +' ] saying: ' + JSON.stringify(obj.data));
 	    };
+			
 		}		
 	}
 })();
-main.init();

@@ -2,8 +2,7 @@
 <html><head>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js">
   </script>
-  <script src="http://cdn.sockjs.org/sockjs-0.3.4.min.js">
-  </script>
+  <script src="//cdn.jsdelivr.net/sockjs/1/sockjs.min.js"></script>
   <script src="/js/main.js"></script>
   <style>
       .box {
@@ -29,17 +28,42 @@
       body {
           background-color: #F0F0F0;
       }
+			#logindiv{
+				opacity:0.92;
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				height: 100%;
+				width: 100%;
+				background: #000;
+				display: block;
+			}
   </style>
-</head><body lang="en">
+</head>
+<body lang="en">
     <h2>WebHook Chat Room</h2>
     <form id="form">
       <input id="input" autocomplete="off" class="box"
              placeholder="type something here" />
     </form>
     <div id="output" class="box"></div>
+
+
+		<!--Login Form -->
+		<div id="logindiv">
+			<form class="form" action="#">
+				<label>name : </label>
+				<br/>
+				<input type="text" name="name" id='login-name' placeholder="Input your nickname"/>
+				<br/>
+				<input type="button" id="login-btn" value="join"/>
+			</form>
+		</div>
+
+
 		<script>
-    $('#input').focus();
-		$('#form').submit(function() {
+      $('#input').focus();
+  		$('#form').submit(function() {
 	      var val = $('#input').val();
 	      $('#input').val('');
 	      var l = ' [ Me ] sending: ' + JSON.stringify(val);
@@ -52,5 +76,15 @@
 	      return false;
 	    });
 
+			// Login form popup login-button click event.
+			$("#login-btn").click(function() {
+				var name = $("#login-name").val();
+				if (name == ""){
+					alert("Username can not be empty");
+				}else{
+					main.join(name);
+					$("#logindiv").css("display", "none");
+				}
+			});
 		</script>
 </body></html>

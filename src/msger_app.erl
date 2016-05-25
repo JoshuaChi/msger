@@ -40,6 +40,7 @@ stop(_State) ->
 %
 connect_callback(Con, init, _) -> 
 	ok = msger_broadcaster:add(Con),
+	io:format("Con:~p~n", [Con]),
 	{ok, undefine};
 connect_callback(Con, {recv, <<"I">>}, State) -> 
 	ok = msger_broadcaster:add(Con),
