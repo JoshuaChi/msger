@@ -1,0 +1,23 @@
+.eunit
+<<<<<<< 4f6b54d8a97b9751368c90778b7c5e4109360376
+deps
+=======
+>>>>>>> move to rebar
+*.o
+*.beam
+*.plt
+erl_crash.dump
+ebin
+rel/example_project
+.concrete/DEV_MODE
+.rebar
+<<<<<<< 4f6b54d8a97b9751368c90778b7c5e4109360376
+=======
+_rel/*
+.erlang.mk/*
+rel/msger/msger_release
+ebin/*
+msger.d
+rel/msger/releases/*
+rel/msger/log/*
+>>>>>>> move to rebar

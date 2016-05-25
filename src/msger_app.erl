@@ -16,13 +16,11 @@ start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
         {'_', [
 					{"/", cowboy_static, {priv_file, msger, "index.html"}},
-					{"/[...]", cowboy_static, {priv_dir, msger, "",
-						[{mimetypes, cow_mimetypes, all}]}},
           {"/login/", msger_login_handler, []},
           {"/connect/[...]", sockjs_cowboy_handler, ConnectEvents}
         ]}
     ]),
-    cowboy:start_http(msger_http_listener, 10000, [{port, 8080}],
+    cowboy:start_http(msger_http_listener, 10000, [{port, 8089}],
         [
         {env, [{dispatch, Dispatch}]},
         {max_keepalive, 100}

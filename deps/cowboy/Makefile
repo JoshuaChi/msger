@@ -1,98 +1,75 @@
 # See LICENSE for licensing information.
 
 PROJECT = cowboy
-RANCH_VSN = 0.8.0
+
+# Options.
+
 ERLC_OPTS ?= -Werror +debug_info +warn_export_all +warn_export_vars \
-   +warn_shadow_vars +warn_obsolete_guard # +bin_opt_info +warn_missing_spec
-
-DEPS_DIR ?= $(CURDIR)/deps
-export DEPS_DIR
-
-# Makefile tweaks.
-
-V ?= 0
-
-appsrc_verbose_0 = @echo " APP   " $(PROJECT).app.src;
-appsrc_verbose = $(appsrc_verbose_$(V))
-
-erlc_verbose_0 = @echo " ERLC  " $(?F);
-erlc_verbose = $(erlc_verbose_$(V))
-
-gen_verbose_0 = @echo " GEN   " $@;
-gen_verbose = $(gen_verbose_$(V))
-
-.PHONY: all clean-all app clean deps clean-deps docs clean-docs tests autobahn build-plt dialyze
-
-# Application.
-
-all: deps app
-
-clean-all: clean clean-deps clean-docs
-	$(gen_verbose) rm -rf .$(PROJECT).plt $(DEPS_DIR) logs
-
-MODULES = $(shell ls src/*.erl | sed 's/src\///;s/\.erl/,/' | sed '$$s/.$$//')
-
-app: ebin/$(PROJECT).app
-	$(appsrc_verbose) cat src/$(PROJECT).app.src \
-		| sed 's/{modules, \[\]}/{modules, \[$(MODULES)\]}/' \
-		> ebin/$(PROJECT).app
-
-COMPILE_FIRST = src/cowboy_middleware.erl src/cowboy_sub_protocol.erl
-
-ebin/$(PROJECT).app: src/*.erl
-	@mkdir -p ebin/
-	$(erlc_verbose) erlc -v $(ERLC_OPTS) -o ebin/ -pa ebin/ \
-		$(COMPILE_FIRST) $?
-
-clean:
-	$(gen_verbose) rm -rf ebin/ test/*.beam erl_crash.dump
+	+warn_shadow_vars +warn_obsolete_guard +warn_missing_spec
+COMPILE_FIRST = cowboy_middleware cowboy_sub_protocol
+CT_OPTS += -pa test -ct_hooks cowboy_ct_hook []
+PLT_APPS = crypto public_key ssl
+CI_OTP = OTP_R16B01 OTP_R16B02 OTP_R16B03-1 OTP-17.0.2 OTP-17.1.2 OTP-17.2.2 OTP-17.3.4 OTP-17.4.1 OTP-17.5.6.2 OTP-18.0.2
 
 # Dependencies.
 
-$(DEPS_DIR)/ranch:
-	@mkdir -p $(DEPS_DIR)
-	git clone -n -- https://github.com/extend/ranch.git $(DEPS_DIR)/ranch
-	cd $(DEPS_DIR)/ranch ; git checkout -q $(RANCH_VSN)
+DEPS = cowlib ranch
+TEST_DEPS = ct_helper gun
+dep_ct_helper = git https://github.com/extend/ct_helper.git master
+dep_gun = git https://github.com/ninenines/gun b85c1f726ca49ac0e3abdcf717317cb95b06207d
 
-deps: $(DEPS_DIR)/ranch
-	@$(MAKE) -C $(DEPS_DIR)/ranch
+# Standard targets.
 
-clean-deps:
-	-@$(MAKE) -C $(DEPS_DIR)/ranch clean
+include erlang.mk
 
 # Documentation.
 
-docs: clean-docs
-	$(gen_verbose) erl -noshell \
-		-eval 'edoc:application($(PROJECT), ".", []), init:stop().'
+dep_ezdoc = git https://github.com/ninenines/ezdoc master
+$(eval $(call dep_target,ezdoc))
+
+build-doc-deps: $(DEPS_DIR)/ezdoc
+	$(MAKE) -C $(DEPS_DIR)/ezdoc
+
+define ezdoc_script
+io:format("Building manual~n"),
+[begin
+	AST = ezdoc:parse_file(F),
+	BF = filename:rootname(filename:basename(F)),
+	io:format("  ~s~n", [BF]),
+	file:write_file("doc/markdown/manual/" ++ BF ++ ".md", ezdoc_markdown:export(AST)),
+	case BF of
+		"cowboy" ++ _ when BF =/= "cowboy_app" ->
+			file:write_file("doc/man3/" ++ BF ++ ".3", ezdoc_man:export(3, AST));
+		_ when BF =/= "index" ->
+			file:write_file("doc/man7/" ++ BF ++ ".7", ezdoc_man:export(7, AST));
+		_ ->
+			ok
+	end
+end || F <- filelib:wildcard("doc/src/manual/*.ezdoc")],
+io:format("Building guide~n"),
+[begin
+	AST = ezdoc:parse_file(F),
+	BF = filename:rootname(filename:basename(F)),
+	io:format("  ~s~n", [BF]),
+	file:write_file("doc/markdown/guide/" ++ BF ++ ".md", ezdoc_markdown:export(AST))
+end || F <- filelib:wildcard("doc/src/guide/*.ezdoc")],
+io:format("Done.~n"),
+init:stop().
+endef
+export ezdoc_script
+
+docs:: clean-docs build-doc-deps
+	@mkdir -p doc/man3 doc/man7 doc/markdown/guide doc/markdown/manual
+	$(gen_verbose) erl -noinput -pa ebin deps/ezdoc/ebin -eval "$$ezdoc_script"
+	@gzip doc/man3/*.3 doc/man7/*.7
+	@cp doc/src/guide/*.png doc/markdown/guide
 
 clean-docs:
-	$(gen_verbose) rm -f doc/*.css doc/*.html doc/*.png doc/edoc-info
+	$(gen_verbose) rm -rf doc/man3 doc/man7 doc/markdown
 
-# Tests.
+MAN_INSTALL_PATH ?= /usr/local/share/man
 
-CT_RUN = ct_run \
-	-noshell \
-	-pa ebin $(DEPS_DIR)/*/ebin \
-	-dir test \
-	-logdir logs
-#	-cover test/cover.spec
-
-tests: ERLC_OPTS += -DTEST=1
-tests: clean clean-deps deps app
-	@mkdir -p logs/
-	@$(CT_RUN) -suite eunit_SUITE http_SUITE ws_SUITE
-
-autobahn: clean clean-deps deps app
-	@mkdir -p logs/
-	@$(CT_RUN) -suite autobahn_SUITE
-
-# Dialyzer.
-
-build-plt: deps app
-	@dialyzer --build_plt --output_plt .$(PROJECT).plt \
-		--apps erts kernel stdlib crypto public_key ssl $(DEPS_DIR)/ranch
-
-dialyze:
-	@dialyzer --src src --plt .$(PROJECT).plt --no_native \
-		-Werror_handling -Wrace_conditions -Wunmatched_returns # -Wunderspecs
+install-docs:
+	mkdir -p $(MAN_INSTALL_PATH)/man3/ $(MAN_INSTALL_PATH)/man7/
+	install -g 0 -o 0 -m 0644 doc/man3/*.gz $(MAN_INSTALL_PATH)/man3/
+	install -g 0 -o 0 -m 0644 doc/man7/*.gz $(MAN_INSTALL_PATH)/man7/
