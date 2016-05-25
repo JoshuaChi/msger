@@ -37,16 +37,18 @@ stop(_State) ->
 %
 % SockJS Events
 %
-connect_callback(_Con, init, _) -> 
+connect_callback(Con, init, _) -> 
+	ok = msger_broadcaster:add(Con),
 	{ok, undefine};
 connect_callback(Con, {recv, <<"I">>}, State) -> 
 	ok = msger_broadcaster:add(Con),
-	% lager:info("Joshua:~p", [State]),
 	% Con:send(data_source:history()),
 	{ok, State};
-connect_callback(_Con, {recv, _Data}, State) -> 
-  % lager:info("Receive Data: ~p~n", [Data]),
+connect_callback(Con, {recv, Data}, State) -> 
+  io:format("Receive Data: ~p~n", [Data]),
+	msger_broadcaster:send(Con, Data),
 	{ok, State};
 connect_callback(Con, closed, State) -> 
+  io:format("closed State:~p", [State]),
 	msger_broadcaster:remove(Con),
 	{ok, State}.

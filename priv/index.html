@@ -30,7 +30,7 @@
       }
   </style>
 </head><body lang="en">
-    <h2>SockJS-erlang Echo example</h2>
+    <h2>WebHook Chat Room</h2>
     <form id="form">
       <input id="input" autocomplete="off" class="box"
              placeholder="type something here" />
@@ -43,16 +43,18 @@
           $('#output').scrollTop($('#output').scrollTop()+10000);
       }
 
-      var sockjs_url = '/echo';
+      var userName = undefined;
+      var sockjs_url = '/connect';
       var sockjs = new SockJS(sockjs_url);
       sockjs.onopen = function() {
-          log(' [*] Connected (using: '+sockjs.protocol+')');
+          log(' [' + userName +'] Connected (using: '+sockjs.protocol+')');
+					userName = 'User-' + Math.floor((Math.random() * 100) + 1);
       };
       sockjs.onclose = function(e) {
-          log(' [*] Disconnected ('+e.status + ' ' + e.reason+ ')');
+          log(' ['+ userName +'] Disconnected ('+e.status + ' ' + e.reason+ ')');
       };
       sockjs.onmessage = function(e) {
-          log(' [ ] received: ' + JSON.stringify(e.data));
+          log(' [ '+ userName +' ] received: ' + JSON.stringify(e.data));
       };
 
       $('#input').focus();

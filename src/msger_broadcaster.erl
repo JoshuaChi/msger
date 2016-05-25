@@ -1,7 +1,7 @@
 -module(msger_broadcaster).
 -behaviour(gen_server).
 
--export([add/1, remove/1, send/1]).
+-export([add/1, remove/1, send/2]).
 -export([start/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -9,8 +9,9 @@ add(Con) ->
 	gen_server:call(?MODULE, {add, Con}).
 remove(Con) -> 
 	gen_server:call(?MODULE, {remove, Con}).
-send(Msg) -> 
-	gen_server:call(?MODULE, {msg, Msg}).
+send(FromCon, Msg) -> 
+  io:format("Sending:~p~n", [Msg]),
+	gen_server:call(?MODULE, {msg, FromCon, Msg}).
 
 %
 % genserver
@@ -32,9 +33,20 @@ handle_call({add, Con}, _From, State) ->
 
 handle_call({remove, Con}, _From, State) -> 
 	{reply, ok, State -- [Con]};
+	
+handle_call({remove, {sockjs_session, {Con, _}}}, _From, State) -> 
+	{reply, ok, State -- [Con]};
 
-handle_call({msg, Msg}, _From, State) -> 
-	lists:map(fun(C) -> C:send(Msg) end, State),
+handle_call({msg, FromCon, Msg}, _From, State) -> 
+	lists:map(
+		fun(C) -> 
+			if 
+				C == FromCon ->
+					do_nothing;
+				true -> 
+					C:send(Msg) 
+			end
+		end, State),
 	{reply, ok, State};
 
 handle_call(_Msg, _From, State) -> {reply, ok, State}.

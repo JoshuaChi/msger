@@ -33,7 +33,8 @@ init([]) ->
 	                          {size,5},
 	                          {max_overflow,1}],
 	WorkerArgs = [],
-	PoolSpecs = [poolboy:child_spec(Name, PoolArgs, WorkerArgs)],
+	B = {msger_broadcaster, {msger_broadcaster, start, []}, permanent, 10000, worker, dynamic},
+	PoolSpecs = [B, poolboy:child_spec(Name, PoolArgs, WorkerArgs)],
   % PoolSpecs = lists:map(
   %   fun({Name, SizeArgs, WorkerArgs}) ->
   %     PoolArgs = [{name, {local, Name}}, {worker_module, msger_worker}] ++ SizeArgs,
