@@ -1,5 +1,4 @@
 .eunit
-deps
 *.o
 *.beam
 *.plt
@@ -8,3 +7,10 @@ ebin
 rel/example_project
 .concrete/DEV_MODE
 .rebar
+_rel/*
+.erlang.mk/*
+rel/msger/msger_release
+ebin/*
+msger.d
+rel/msger/releases/*
+rel/msger/log/*

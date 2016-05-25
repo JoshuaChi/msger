@@ -1,0 +1,41 @@
+{application, msger,
+ [
+  {description, "Websocket Messger"},
+  {vsn, "1"},
+  {registered, []},
+  {sync, [
+      {src_dirs, {replace, [{"./src", []}]}}
+  ]},
+  {applications, [
+									kernel,
+									stdlib,
+									sasl,
+									lager,
+									ranch,
+									cowboy,
+									crypto,
+									mnesia,
+									goldrush,
+									xmerl,
+									sync,
+									sockjs
+                 ]},
+  {mod, { msger_app, []}},
+  {env, [
+		{environment, dev},
+    {pools_dev, [
+        {msger_pool, [
+            {size, 5},
+            {max_overflow, 1}
+        ], [
+          {hostname, "127.0.0.1"},
+          {timeout,  3000},
+          {partition_threshold, 500000},
+          {port, 27021},
+          {username, "none"},
+          {password, "none"}
+        ]}
+			]
+		}			
+  ]}
+ ]}.

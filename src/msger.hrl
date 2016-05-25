@@ -1,0 +1,8 @@
+-define(TABLE_USER, 'user').
+-define(TABLE_USER_RESOURCE, 'user_resource').
+-define(CLIENT_TIMEOUT, 3000).
+-define(SYNC_TRANSACTION_RETRIES, 10).
+-define(ASYNC_TRANSACTION_RETRIES, 3).
+-record(user, {id, email, mobile}).
+-record(user_friends, {id, friend_id}).
+-record(user_resources, {id, resource_id, conn}).
