@@ -16,6 +16,7 @@ start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
         {'_', [
 					{"/", cowboy_static, {priv_file, msger, "index.html"}},
+					{"/js/[...]", cowboy_static, {priv_dir, msger, "js"}},
           {"/login/", msger_login_handler, []},
           {"/connect/[...]", sockjs_cowboy_handler, ConnectEvents}
         ]}
@@ -49,6 +50,5 @@ connect_callback(Con, {recv, Data}, State) ->
 	msger_broadcaster:send(Con, Data),
 	{ok, State};
 connect_callback(Con, closed, State) -> 
-  io:format("closed State:~p", [State]),
 	msger_broadcaster:remove(Con),
 	{ok, State}.

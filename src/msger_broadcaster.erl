@@ -33,9 +33,6 @@ handle_call({add, Con}, _From, State) ->
 
 handle_call({remove, Con}, _From, State) -> 
 	{reply, ok, State -- [Con]};
-	
-handle_call({remove, {sockjs_session, {Con, _}}}, _From, State) -> 
-	{reply, ok, State -- [Con]};
 
 handle_call({msg, FromCon, Msg}, _From, State) -> 
 	lists:map(

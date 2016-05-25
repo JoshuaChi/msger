@@ -4,6 +4,7 @@
   </script>
   <script src="http://cdn.sockjs.org/sockjs-0.3.4.min.js">
   </script>
+  <script src="/js/main.js"></script>
   <style>
       .box {
           border: 1px dashed black;
@@ -36,39 +37,20 @@
              placeholder="type something here" />
     </form>
     <div id="output" class="box"></div>
-    <script>
-      function log(m) {
-          $('#output').append($("<code>").text(m));
-          $('#output').append($("<br>"));
-          $('#output').scrollTop($('#output').scrollTop()+10000);
-      }
+		<script>
+    $('#input').focus();
+		$('#form').submit(function() {
+	      var val = $('#input').val();
+	      $('#input').val('');
+	      var l = ' [ Me ] sending: ' + JSON.stringify(val);
+	      if (main.getState() !== SockJS.OPEN) {
+	          l += ' (error, connection not established)';
+	      } else {
+	          main.send(val);
+	      }
+	      main.log(l);
+	      return false;
+	    });
 
-      var userName = undefined;
-      var sockjs_url = '/connect';
-      var sockjs = new SockJS(sockjs_url);
-      sockjs.onopen = function() {
-          log(' [' + userName +'] Connected (using: '+sockjs.protocol+')');
-					userName = 'User-' + Math.floor((Math.random() * 100) + 1);
-      };
-      sockjs.onclose = function(e) {
-          log(' ['+ userName +'] Disconnected ('+e.status + ' ' + e.reason+ ')');
-      };
-      sockjs.onmessage = function(e) {
-          log(' [ '+ userName +' ] received: ' + JSON.stringify(e.data));
-      };
-
-      $('#input').focus();
-      $('#form').submit(function() {
-          var val = $('#input').val();
-          $('#input').val('');
-          var l = ' [ ] sending: ' + JSON.stringify(val);
-          if (sockjs.readyState !== SockJS.OPEN) {
-              l += ' (error, connection not established)';
-          } else {
-              sockjs.send(val);
-          }
-          log(l);
-          return false;
-      });
-    </script>
+		</script>
 </body></html>
